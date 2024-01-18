@@ -120,11 +120,11 @@ const seed = RunService.IsServer() ? DateTime.now().UnixTimestamp : awaitSeedAtt
 let netFolder: Folder;
 if (RunService.IsServer()) {
 	netFolder = new Instance("Folder");
-	netFolder.Name = "ProtonNet";
+	netFolder.Name = "NeutronNet";
 	netFolder.Parent = script;
 	script.SetAttribute("s", seed);
 } else {
-	netFolder = script.WaitForChild("ProtonNet") as Folder;
+	netFolder = script.WaitForChild("NeutronNet") as Folder;
 }
 
 const networkNames = new Set<string>();

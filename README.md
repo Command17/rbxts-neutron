@@ -38,11 +38,11 @@ class MyClassComponent extends BaseClassComponent<BasePart> {
 
 ```ts
 // shared/network.ts
-import { UnreliableNetEvent } from "@rbxts/neutron";
+import { DangerousNetFunction } from "@rbxts/neutron";
 
 export namespace Network {
-	// Send the mouse pos to the server
-	export const updateMousePos = new UnreliableNetEvent<[pos: Vector3], NetEventType.ClientToServer>
+	// Send a client message to the server
+	export const sendClientMessage = new DangerousNetFunction<[], [message: string]>
 }
 ```
 
@@ -235,13 +235,13 @@ Custom lifecycles can be added. At their core, lifecycles are just special event
 
 ```ts
 // shared/lifecycles.ts
-import { ProtonLifecycle } from "@rbxts/proton";
+import { NeutronLifecycle } from "@rbxts/neutron";
 
 export interface OnHeartbeat {
 	onHeartbeat(dt: number): void;
 }
 
-export const HeartbeatLifecycle = new ProtonLifecycle<OnHeartbeat["onHeartbeat"]>();
+export const HeartbeatLifecycle = new NeutronLifecycle<OnHeartbeat["onHeartbeat"]>();
 
 RunService.Heartbeat.Connect((dt) => HeartbeatLifecycle.fire(dt));
 ```
@@ -249,7 +249,7 @@ RunService.Heartbeat.Connect((dt) => HeartbeatLifecycle.fire(dt));
 A provider can then hook into the lifecycle:
 
 ```ts
-import { Provider, Lifecycle } from "@rbxts/proton";
+import { Provider, Lifecycle } from "@rbxts/neutron";
 
 @Provider()
 export class MyProvider implements OnHeartbeat {

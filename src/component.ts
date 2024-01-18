@@ -139,6 +139,13 @@ export function ClassComponent(config: ComponentConfig) {
 	}
 }
 
+export function getClassComponent<I extends C["instance"], C extends BaseComponent>(
+	componentClass: new () => C,
+	instance: I,
+) {
+	return componentClassToRunner.get(componentClass)?.getFromInstance(instance)?.instance as C | undefined;
+}
+
 // proton
 
 class ComponentRunner {
@@ -262,14 +269,14 @@ class ComponentRunner {
 
 	forceSpawn(instance: Instance) {
 		if (this.config.tag !== undefined) {
-			error("[Proton]: Component with a configured tag cannot be spawned", 2);
+			error("[Neutron]: Component with a configured tag cannot be spawned", 2);
 		}
 		return this.getFromInstance(instance) ?? this.onInstanceAdded(instance);
 	}
 
 	forceDespawn(instance: Instance) {
 		if (this.config.tag !== undefined) {
-			error("[Proton]: Component with a configured tag cannot be despawned", 2);
+			error("[Neutron]: Component with a configured tag cannot be despawned", 2);
 		}
 		this.onInstanceRemoved(instance);
 	}
@@ -282,7 +289,7 @@ class ComponentRunner {
 export function Component(config: ComponentConfig) {
 	return <B extends new () => BaseComponent>(componentClass: B) => {
 		if (config.tag !== undefined && usedTags.has(config.tag)) {
-			error(`[Proton]: Cannot have more than one component with the same tag (tag: "${config.tag}")`, 2);
+			error(`[Neutron]: Cannot have more than one component with the same tag (tag: "${config.tag}")`, 2);
 		}
 		const runner = new ComponentRunner(config, componentClass);
 		componentClassToRunner.set(componentClass, runner);
@@ -319,7 +326,7 @@ export function getComponent<I extends C["instance"], C extends BaseComponent>(
 export function getAllComponents<C extends BaseComponent>(componentClass: new () => C) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Invalid component class", 2);
+		error("[Neutron]: Invalid component class", 2);
 	}
 	return runner.getAll() as C[];
 }
@@ -338,7 +345,7 @@ export function getAllComponents<C extends BaseComponent>(componentClass: new ()
 export function getComponentStartedSignal<C extends BaseComponent>(componentClass: new () => C) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Invalid component class", 2);
+		error("[Neutron]: Invalid component class", 2);
 	}
 	return runner.componentStarted as Signal<[component: C]>;
 }
@@ -357,7 +364,7 @@ export function getComponentStartedSignal<C extends BaseComponent>(componentClas
 export function getComponentStoppedSignal<C extends BaseComponent>(componentClass: new () => C) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Invalid component class", 2);
+		error("[Neutron]: Invalid component class", 2);
 	}
 	return runner.componentStopped as Signal<[component: C]>;
 }
@@ -392,7 +399,7 @@ export function observeComponent<C extends BaseComponent>(
 ) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Invalid component class", 2);
+		error("[Neutron]: Invalid component class", 2);
 	}
 
 	const cleanups = new Map<BaseComponent, () => void>();
@@ -436,7 +443,7 @@ export function addComponent<I extends C["instance"], C extends BaseComponent>(
 ) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Component class not set up");
+		error("[Neutron]: Component class not set up");
 	}
 	return runner.forceSpawn(instance) as C;
 }
@@ -452,7 +459,7 @@ export function removeComponent<I extends C["instance"], C extends BaseComponent
 ) {
 	const runner = componentClassToRunner.get(componentClass);
 	if (runner === undefined) {
-		error("[Proton]: Component class not set up");
+		error("[Neutron]: Component class not set up");
 	}
 	runner.forceDespawn(instance);
 }

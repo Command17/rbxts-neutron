@@ -1,4 +1,4 @@
-import { Proton } from "./core";
+import { Neutron } from "./core";
 
 type LifecycleCallback<T> = (...args: Parameters<T>) => void;
 
@@ -25,9 +25,9 @@ interface CallbackItem<T extends LifecycleCallback<T>> {
 }
 
 /**
- * Custom lifecycle for Proton providers.
+ * Custom lifecycle for Neutron providers.
  */
-export class ProtonLifecycle<T extends LifecycleCallback<T>> {
+export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	private callbacks: CallbackItem<T>[] = [];
 	private onRegisteredCallbacks: ((c: T) => void)[] = [];
 	private onUnregisteredCallbacks: ((c: T) => void)[] = [];
@@ -143,7 +143,7 @@ export class ProtonLifecycle<T extends LifecycleCallback<T>> {
  * OnLifecycle decorator.
  * @param lifecycle Attached lifecycle
  */
-export function Lifecycle<T extends LifecycleCallback<T>>(lifecycle: ProtonLifecycle<T>) {
+export function Lifecycle<T extends LifecycleCallback<T>>(lifecycle: NeutronLifecycle<T>) {
 	return (
 		target: defined,
 		property: string,
@@ -151,12 +151,12 @@ export function Lifecycle<T extends LifecycleCallback<T>>(lifecycle: ProtonLifec
 	) => {
 		lifecycle.register(
 			((...args: Parameters<T>) => {
-				descriptor.value(Proton.get(target as new () => never), ...args);
+				descriptor.value(Neutron.get(target as new () => never), ...args);
 			}) as T,
 			tostring(target),
 		);
 	};
 }
 
-export const ProtonStart = new ProtonLifecycle<() => void>(LifecycleBehavior.Concurrent);
-Proton.onStart(() => ProtonStart.fire());
+export const NeutronStart = new NeutronLifecycle<() => void>(LifecycleBehavior.Concurrent);
+Neutron.onStart(() => NeutronStart.fire());

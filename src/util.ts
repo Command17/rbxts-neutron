@@ -1,6 +1,6 @@
-export namespace ProtonUtil {
+export namespace NeutronUtil {
 	/**
-	 * Load Mode for `ProtonUtil.loadModules()` function.
+	 * Load Mode for `NeutronUtil.loadModules()` function.
 	 */
 	export enum LoadMode {
 		/**
@@ -21,13 +21,13 @@ export namespace ProtonUtil {
 	 *
 	 * ```ts
 	 * // Load all children ModuleScripts
-	 * ProtonUtil.loadModules();
+	 * NeutronUtil.loadModules();
 	 *
 	 * // Load all descendant ModuleScripts
-	 * ProtonUtil.loadModules(undefined, ProtonUtil.LoadMode.Descendants);
+	 * NeutronUtil.loadModules(undefined, NeutronUtil.LoadMode.Descendants);
 	 *
 	 * // Load all ModuleScripts that end with '-service'
-	 * ProtonUtil.loadModules("%-service$", ProtonUtil.LoadMode.Descendants);
+	 * NeutronUtil.loadModules("%-service$", NeutronUtil.LoadMode.Descendants);
 	 * ```
 	 *
 	 * @param matchName Only load ModuleScripts that match the given pattern
