@@ -11,7 +11,7 @@ export namespace NeutronUtil {
 		/**
 		 * Iterate over all descendant instances.
 		 */
-		Descendants,
+		Descendants
 	}
 
 	/**
@@ -33,13 +33,11 @@ export namespace NeutronUtil {
 	 * @param matchName Only load ModuleScripts that match the given pattern
 	 * @param loadMode LoadMode enum to indicate scanning direct children or all descendants
 	 */
-	export function loadModules(parent: Instance, matchName?: string, loadMode: LoadMode = LoadMode.Children) {
+	export function loadModules(parent: Instance, matchName: string | undefined, loadMode: LoadMode = LoadMode.Children) {
 		const instances = loadMode === LoadMode.Children ? parent.GetChildren() : parent.GetDescendants();
 		for (const instance of instances) {
 			if (instance.IsA("ModuleScript")) {
-				if (matchName === undefined || instance.Name.match(matchName)[0] !== undefined) {
-					require(instance);
-				}
+				if (matchName === undefined || instance.Name.match(matchName)[0] !== undefined) require(instance)
 			}
 		}
 	}

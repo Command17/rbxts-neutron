@@ -14,7 +14,9 @@ import { BaseClassComponent, ClassComponent } from "@rbxts/neutron";
 
 @ClassComponent({ tag: "MyClassComponent" })
 class MyClassComponent extends BaseClassComponent<BasePart> {
-	constructor() {
+	constructor(instance: BasePart, tag: string) {
+		super(instance, tag)
+
 		// Start code
 	}
 

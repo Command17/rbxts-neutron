@@ -70,8 +70,8 @@ export abstract class BaseComponent<I extends Instance = Instance> {
  *
  * ```ts
  * class MyComponent extends BaseClassComponent<BasePart> {
- *     constructor(instance: BasePart) {
- *         super(instance)
+ *     constructor(instance: BasePart, tag: string) {
+ *         super(instance, tag)
  *     }
  *     
  *     public destroy() {
@@ -154,26 +154,21 @@ export function getClassComponent<I extends C["instance"], C extends BaseCompone
 // proton
 
 class ComponentRunner {
-	private readonly compInstances = new Map<
-		Instance,
-		{ comp: BaseComponent; started: boolean; connections: RBXScriptConnection[] }
-	>();
-	private readonly addQueue = new Map<Instance, thread>();
+	private readonly compInstances = new Map<Instance,
+		{comp: BaseComponent; started: boolean; connections: RBXScriptConnection[]}
+	>()
 
-	public componentStarted = new Signal<[component: BaseComponent]>();
-	public componentStopped = new Signal<[component: BaseComponent]>();
+	private readonly addQueue = new Map<Instance, thread>()
+
+	public componentStarted = new Signal<[component: BaseComponent]>()
+	public componentStopped = new Signal<[component: BaseComponent]>()
 
 	constructor(private readonly config: ComponentConfig, private readonly componentClass: new () => BaseComponent) {
 		if (config.tag !== undefined) {
-			CollectionService.GetInstanceAddedSignal(config.tag).Connect((instance) =>
-				this.queueOnInstanceAdded(instance),
-			);
-			CollectionService.GetInstanceRemovedSignal(config.tag).Connect((instance) =>
-				this.onInstanceRemoved(instance),
-			);
-			for (const instance of CollectionService.GetTagged(config.tag)) {
-				task.spawn(() => this.queueOnInstanceAdded(instance));
-			}
+			CollectionService.GetInstanceAddedSignal(config.tag).Connect((instance) => this.queueOnInstanceAdded(instance))
+			CollectionService.GetInstanceRemovedSignal(config.tag).Connect((instance) => this.onInstanceRemoved(instance))
+
+			for (const instance of CollectionService.GetTagged(config.tag)) task.spawn(() => this.queueOnInstanceAdded(instance))
 		}
 	}
 
@@ -181,109 +176,125 @@ class ComponentRunner {
 		if (this.config.blacklistDescendants !== undefined) {
 			for (const descendant of this.config.blacklistDescendants) {
 				if (instance.IsDescendantOf(descendant)) {
-					return false;
+					return false
 				}
 			}
 		}
+
 		if (this.config.whitelistDescendants !== undefined) {
 			for (const descendant of this.config.whitelistDescendants) {
-				if (instance.IsDescendantOf(descendant)) {
-					return true;
-				}
+				if (instance.IsDescendantOf(descendant)) return true
 			}
-			return false;
+
+			return false
 		}
-		return true;
+
+		return true
 	}
 
 	private onInstanceAdded(instance: Instance) {
-		const comp = new this.componentClass();
-		comp.instance = instance;
-		comp.tag = this.config.tag ?? "";
-		const compItem = { comp, started: false, connections: new Array<RBXScriptConnection>() };
-		this.compInstances.set(instance, compItem);
+		const comp = new this.componentClass()
+
+		comp.instance = instance
+		comp.tag = this.config.tag ?? ""
+
+		const compItem = {comp, started: false, connections: new Array<RBXScriptConnection>()}
+
+		this.compInstances.set(instance, compItem)
+
 		if (this.checkParent(instance)) {
-			compItem.started = true;
-			task.spawn(() => comp.onStart());
-			this.componentStarted.Fire(comp);
+			compItem.started = true
+
+			task.spawn(() => comp.onStart())
+
+			this.componentStarted.Fire(comp)
 		}
+
 		if (this.config.whitelistDescendants !== undefined || this.config.blacklistDescendants !== undefined) {
 			const ancestryConnection = instance.AncestryChanged.Connect((_, parent) => {
-				if (parent === undefined) return;
+				if (parent === undefined) return
+
 				if (this.checkParent(instance)) {
 					if (!compItem.started) {
-						compItem.started = true;
-						task.spawn(() => comp.onStart());
-						this.componentStarted.Fire(comp);
+						compItem.started = true
+
+						task.spawn(() => comp.onStart())
+
+						this.componentStarted.Fire(comp)
 					}
 				} else {
 					if (compItem.started) {
-						compItem.started = false;
-						task.spawn(() => comp.onStop());
-						this.componentStopped.Fire(comp);
+						compItem.started = false
+
+						task.spawn(() => comp.onStop())
+
+						this.componentStopped.Fire(comp)
 					}
 				}
-			});
-			compItem.connections.push(ancestryConnection);
+			})
+
+			compItem.connections.push(ancestryConnection)
 		}
-		this.addQueue.delete(instance);
-		return comp;
+
+		this.addQueue.delete(instance)
+
+		return comp
 	}
 
 	private queueOnInstanceAdded(instance: Instance) {
-		if (this.addQueue.has(instance) || this.compInstances.has(instance)) return;
-		this.addQueue.set(
-			instance,
-			task.defer(() => this.onInstanceAdded(instance)),
-		);
+		if (this.addQueue.has(instance) || this.compInstances.has(instance)) return
+
+		this.addQueue.set(instance, task.defer(() => this.onInstanceAdded(instance)))
 	}
 
 	private onInstanceRemoved(instance: Instance) {
 		if (this.addQueue.has(instance)) {
 			task.cancel(this.addQueue.get(instance)!);
-			this.addQueue.delete(instance);
+
+			this.addQueue.delete(instance)
 		}
+
 		const compItem = this.compInstances.get(instance);
+
 		if (compItem !== undefined) {
-			this.compInstances.delete(instance);
+			this.compInstances.delete(instance)
+
 			if (compItem.started) {
-				task.spawn(() => compItem.comp.onStop());
-				this.componentStopped.Fire(compItem.comp);
+				task.spawn(() => compItem.comp.onStop())
+
+				this.componentStopped.Fire(compItem.comp)
 			}
-			for (const connection of compItem.connections) {
-				connection.Disconnect();
-			}
+
+			compItem.connections.forEach((connection) => connection.Disconnect())
 		}
 	}
 
 	getFromInstance(instance: Instance) {
-		const compItem = this.compInstances.get(instance);
-		if (compItem !== undefined && compItem.started) {
-			return compItem.comp;
-		}
+		const compItem = this.compInstances.get(instance)
+
+		if (compItem !== undefined && compItem.started) return compItem.comp
+
 		return undefined;
-	}
+	} 
 
 	getAll() {
-		const all = [];
-		for (const [_, compItem] of this.compInstances) {
-			all.push(compItem.comp);
-		}
-		return all;
+		const all: BaseComponent[] = []
+
+		this.compInstances.forEach((compItem, _) => all.push(compItem.comp))
+
+		return all
 	}
 
 	forceSpawn(instance: Instance) {
-		if (this.config.tag !== undefined) {
-			error("[Neutron]: Component with a configured tag cannot be spawned", 2);
-		}
-		return this.getFromInstance(instance) ?? this.onInstanceAdded(instance);
+		if (this.config.tag !== undefined) error("[Neutron]: Component with a configured tag cannot be spawned", 2)
+
+		return this.getFromInstance(instance) ?? this.onInstanceAdded(instance)
 	}
 
 	forceDespawn(instance: Instance) {
-		if (this.config.tag !== undefined) {
-			error("[Neutron]: Component with a configured tag cannot be despawned", 2);
-		}
-		this.onInstanceRemoved(instance);
+		if (this.config.tag !== undefined) error("[Neutron]: Component with a configured tag cannot be despawned", 2)
+
+		this.onInstanceRemoved(instance)
 	}
 }
 
@@ -293,14 +304,13 @@ class ComponentRunner {
  */
 export function Component(config: ComponentConfig) {
 	return <B extends new () => BaseComponent>(componentClass: B) => {
-		if (config.tag !== undefined && usedTags.has(config.tag)) {
-			error(`[Neutron]: Cannot have more than one component with the same tag (tag: "${config.tag}")`, 2);
-		}
-		const runner = new ComponentRunner(config, componentClass);
-		componentClassToRunner.set(componentClass, runner);
-		if (config.tag !== undefined) {
-			usedTags.add(config.tag);
-		}
+		if (config.tag !== undefined && usedTags.has(config.tag)) error(`[Neutron]: Cannot have more than one component with the same tag (tag: "${config.tag}")`, 2)
+
+		const runner = new ComponentRunner(config, componentClass)
+
+		componentClassToRunner.set(componentClass, runner)
+
+		if (config.tag !== undefined) usedTags.add(config.tag)
 	};
 }
 
@@ -316,10 +326,7 @@ export function Component(config: ComponentConfig) {
  * @param instance Roblox instance
  * @returns Component or undefined
  */
-export function getComponent<I extends C["instance"], C extends BaseComponent>(
-	componentClass: new () => C,
-	instance: I,
-) {
+export function getComponent<I extends C["instance"], C extends BaseComponent>(componentClass: new () => C, instance: I) {
 	return componentClassToRunner.get(componentClass)?.getFromInstance(instance) as C | undefined;
 }
 
@@ -329,11 +336,11 @@ export function getComponent<I extends C["instance"], C extends BaseComponent>(
  * @returns Component instances
  */
 export function getAllComponents<C extends BaseComponent>(componentClass: new () => C) {
-	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Invalid component class", 2);
-	}
-	return runner.getAll() as C[];
+	const runner = componentClassToRunner.get(componentClass)
+
+	if (runner === undefined) error("[Neutron]: Invalid component class", 2)
+
+	return runner.getAll() as C[]
 }
 
 /**
@@ -348,11 +355,11 @@ export function getAllComponents<C extends BaseComponent>(componentClass: new ()
  * @returns Signal
  */
 export function getComponentStartedSignal<C extends BaseComponent>(componentClass: new () => C) {
-	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Invalid component class", 2);
-	}
-	return runner.componentStarted as Signal<[component: C]>;
+	const runner = componentClassToRunner.get(componentClass)
+
+	if (runner === undefined) error("[Neutron]: Invalid component class", 2)
+
+	return runner.componentStarted as Signal<[component: C]>
 }
 
 /**
@@ -367,11 +374,11 @@ export function getComponentStartedSignal<C extends BaseComponent>(componentClas
  * @returns Signal
  */
 export function getComponentStoppedSignal<C extends BaseComponent>(componentClass: new () => C) {
-	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Invalid component class", 2);
-	}
-	return runner.componentStopped as Signal<[component: C]>;
+	const runner = componentClassToRunner.get(componentClass)
+
+	if (runner === undefined) error("[Neutron]: Invalid component class", 2)
+
+	return runner.componentStopped as Signal<[component: C]>
 }
 
 /**
@@ -398,42 +405,41 @@ export function getComponentStoppedSignal<C extends BaseComponent>(componentClas
  * @param observer Observer function
  * @returns Root cleanup
  */
-export function observeComponent<C extends BaseComponent>(
-	componentClass: new () => C,
-	observer: (component: C) => () => void,
-) {
+export function observeComponent<C extends BaseComponent>(componentClass: new () => C, observer: (component: C) => () => void) {
 	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Invalid component class", 2);
-	}
+
+	if (runner === undefined) error("[Neutron]: Invalid component class", 2)
 
 	const cleanups = new Map<BaseComponent, () => void>();
 
 	const onStopped = (component: BaseComponent) => {
-		const cleanup = cleanups.get(component);
-		if (cleanup === undefined) return;
-		cleanups.delete(component);
+		const cleanup = cleanups.get(component)
+
+		if (cleanup === undefined) return
+
+		cleanups.delete(component)
+
 		cleanup();
-	};
-
-	const onStarted = (component: BaseComponent) => {
-		onStopped(component);
-		const cleanup = observer(component as C);
-		cleanups.set(component, cleanup);
-	};
-
-	const startedConnection = runner.componentStarted.Connect(onStarted);
-	const stoppedConnection = runner.componentStopped.Connect(onStopped);
-	for (const component of runner.getAll()) {
-		task.spawn(onStarted, component);
 	}
 
+	const onStarted = (component: BaseComponent) => {
+		onStopped(component)
+
+		const cleanup = observer(component as C)
+
+		cleanups.set(component, cleanup)
+	}
+
+	const startedConnection = runner.componentStarted.Connect(onStarted)
+	const stoppedConnection = runner.componentStopped.Connect(onStopped)
+
+	runner.getAll().forEach((component) => task.spawn(onStarted, component))
+
 	return () => {
-		startedConnection.Disconnect();
-		stoppedConnection.Disconnect();
-		for (const [_, cleanup] of cleanups) {
-			task.spawn(cleanup);
-		}
+		startedConnection.Disconnect()
+		stoppedConnection.Disconnect()
+
+		cleanups.forEach((cleanUp) => task.spawn(cleanUp))
 	};
 }
 
@@ -442,15 +448,12 @@ export function observeComponent<C extends BaseComponent>(
  * @param componentClass Component class
  * @param instance Instance
  */
-export function addComponent<I extends C["instance"], C extends BaseComponent>(
-	componentClass: new () => C,
-	instance: I,
-) {
-	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Component class not set up");
-	}
-	return runner.forceSpawn(instance) as C;
+export function addComponent<I extends C["instance"], C extends BaseComponent>(componentClass: new () => C, instance: I) {
+	const runner = componentClassToRunner.get(componentClass)
+
+	if (runner === undefined) error("[Neutron]: Component class not set up")
+
+	return runner.forceSpawn(instance) as C
 }
 
 /**
@@ -458,13 +461,10 @@ export function addComponent<I extends C["instance"], C extends BaseComponent>(
  * @param componentClass Component class
  * @param instance Instance
  */
-export function removeComponent<I extends C["instance"], C extends BaseComponent>(
-	componentClass: new () => C,
-	instance: I,
-) {
-	const runner = componentClassToRunner.get(componentClass);
-	if (runner === undefined) {
-		error("[Neutron]: Component class not set up");
-	}
-	runner.forceDespawn(instance);
+export function removeComponent<I extends C["instance"], C extends BaseComponent>(componentClass: new () => C, instance: I) {
+	const runner = componentClassToRunner.get(componentClass)
+
+	if (runner === undefined) error("[Neutron]: Component class not set up")
+
+	runner.forceDespawn(instance)
 }

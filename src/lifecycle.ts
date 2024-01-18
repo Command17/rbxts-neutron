@@ -16,21 +16,21 @@ export enum LifecycleBehavior {
 	 * time. This calls the callbacks using `task.spawn`
 	 * internally.
 	 */
-	Concurrent,
+	Concurrent
 }
 
 interface CallbackItem<T extends LifecycleCallback<T>> {
-	callback: T;
-	memoryCategory: string;
+	callback: T
+	memoryCategory: string
 }
 
 /**
  * Custom lifecycle for Neutron providers.
  */
 export class NeutronLifecycle<T extends LifecycleCallback<T>> {
-	private callbacks: CallbackItem<T>[] = [];
-	private onRegisteredCallbacks: ((c: T) => void)[] = [];
-	private onUnregisteredCallbacks: ((c: T) => void)[] = [];
+	private callbacks: CallbackItem<T>[] = []
+	private onRegisteredCallbacks: ((c: T) => void)[] = []
+	private onUnregisteredCallbacks: ((c: T) => void)[] = []
 
 	/**
 	 * Constructs a new lifecycle
@@ -39,21 +39,22 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	constructor(behavior: LifecycleBehavior = LifecycleBehavior.Concurrent) {
 		switch (behavior) {
 			case LifecycleBehavior.Series:
-				this.fire = this.fireSeries;
-				break;
+				this.fire = this.fireSeries
+			break
+
 			case LifecycleBehavior.Concurrent:
-				this.fire = this.fireConcurrent;
-				break;
+				this.fire = this.fireConcurrent
+			break
 		}
 	}
 
-	private callOnUnregisteredCallbacks(callback: T): void {
+	private callOnUnregisteredCallbacks(callback: T) {
 		for (const onUnregistered of this.onUnregisteredCallbacks) {
 			onUnregistered(callback);
 		}
 	}
 
-	private fireConcurrent(...args: Parameters<T>): void {
+	private fireConcurrent(...args: Parameters<T>) {
 		for (const callback of this.callbacks) {
 			task.spawn(() => {
 				debug.setmemorycategory(callback.memoryCategory);
@@ -62,11 +63,13 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 		}
 	}
 
-	private fireSeries(...args: Parameters<T>): void {
+	private fireSeries(...args: Parameters<T>) {
 		for (const callback of this.callbacks) {
-			debug.setmemorycategory(callback.memoryCategory);
-			callback.callback(...args);
-			debug.resetmemorycategory();
+			debug.setmemorycategory(callback.memoryCategory)
+
+			callback.callback(...args)
+
+			debug.resetmemorycategory()
 		}
 	}
 
@@ -74,7 +77,7 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	 * Fire the lifecycle.
 	 * @param args Arguments passed to the registered callbacks.
 	 */
-	fire(...args: Parameters<T>): void {}
+	fire(...args: Parameters<T>) {}
 
 	/**
 	 * Register a lifecycle. This is usually only called from
@@ -82,31 +85,30 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	 * @param callback Callback
 	 * @param memoryCategory Memory category
 	 */
-	register(callback: T, memoryCategory: string): void {
-		this.callbacks.push({ callback, memoryCategory });
-		for (const onRegistered of this.onRegisteredCallbacks) {
-			onRegistered(callback);
-		}
+	register(callback: T, memoryCategory: string) {
+		this.callbacks.push({callback, memoryCategory})
+
+		this.onRegisteredCallbacks.forEach((onRegistered) => onRegistered(callback))
 	}
 
 	/**
 	 * Unregister a lifecycle.
 	 * @param callback Callback to unregister
 	 */
-	unregister(callback: T): void {
-		const index = this.callbacks.findIndex((item) => item.callback === callback);
-		if (index === -1) return;
-		this.callbacks.unorderedRemove(index);
-		this.callOnUnregisteredCallbacks(callback);
+	unregister(callback: T) {
+		const index = this.callbacks.findIndex((item) => item.callback === callback)
+
+		if (index === -1) return
+
+		this.callbacks.unorderedRemove(index)
+		this.callOnUnregisteredCallbacks(callback)
 	}
 
 	/**
 	 * Unregister all callbacks.
 	 */
-	unregisterAll(): void {
-		for (const callback of this.callbacks) {
-			this.callOnUnregisteredCallbacks(callback.callback);
-		}
+	unregisterAll() {
+		this.callbacks.forEach((callback) => this.callOnUnregisteredCallbacks(callback.callback))
 		this.callbacks.clear();
 	}
 
@@ -116,12 +118,15 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	 * @returns `() => void` cleanup function (call to stop listening to `onRegistered`)
 	 */
 	onRegistered(callback: (c: T) => void) {
-		this.onRegisteredCallbacks.push(callback);
+		this.onRegisteredCallbacks.push(callback)
+
 		return () => {
-			const index = this.onRegisteredCallbacks.indexOf(callback);
-			if (index === -1) return;
-			this.onRegisteredCallbacks.unorderedRemove(index);
-		};
+			const index = this.onRegisteredCallbacks.indexOf(callback)
+
+			if (index === -1) return
+
+			this.onRegisteredCallbacks.unorderedRemove(index)
+		}
 	}
 
 	/**
@@ -130,11 +135,14 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
 	 * @returns `() => void` cleanup function (call to stop listening to `onUnregistered`)
 	 */
 	onUnregistered(callback: (c: T) => void) {
-		this.onUnregisteredCallbacks.push(callback);
+		this.onUnregisteredCallbacks.push(callback)
+
 		return () => {
-			const index = this.onUnregisteredCallbacks.indexOf(callback);
-			if (index === -1) return;
-			this.onUnregisteredCallbacks.unorderedRemove(index);
+			const index = this.onUnregisteredCallbacks.indexOf(callback)
+
+			if (index === -1) return
+
+			this.onUnregisteredCallbacks.unorderedRemove(index)
 		};
 	}
 }
@@ -144,19 +152,16 @@ export class NeutronLifecycle<T extends LifecycleCallback<T>> {
  * @param lifecycle Attached lifecycle
  */
 export function Lifecycle<T extends LifecycleCallback<T>>(lifecycle: NeutronLifecycle<T>) {
-	return (
-		target: defined,
-		property: string,
-		descriptor: TypedPropertyDescriptor<(this: defined, ...args: Parameters<T>) => void>,
-	) => {
+	return (target: defined, _: string, descriptor: TypedPropertyDescriptor<(this: defined, ...args: Parameters<T>) => void>) => {
 		lifecycle.register(
 			((...args: Parameters<T>) => {
-				descriptor.value(Neutron.get(target as new () => never), ...args);
+				descriptor.value(Neutron.get(target as new () => never), ...args)
 			}) as T,
-			tostring(target),
+			tostring(target)
 		);
 	};
 }
 
-export const NeutronStart = new NeutronLifecycle<() => void>(LifecycleBehavior.Concurrent);
-Neutron.onStart(() => NeutronStart.fire());
+export const NeutronStart = new NeutronLifecycle<() => void>(LifecycleBehavior.Concurrent)
+
+Neutron.onStart(() => NeutronStart.fire())

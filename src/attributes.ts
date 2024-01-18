@@ -31,38 +31,43 @@ export class Attributes<T extends AttributeRecord<string, AttributeValue>, I ext
 
 	constructor(private readonly instance: I, defaultAttributes: T) {
 		const attrBound = instance.GetAttributes();
+		
 		for (const [k, v] of pairs(defaultAttributes)) {
-			const key = k as string;
-			const val = v as AttributeValue;
-			const bound = attrBound.get(key);
+			const key = k as string
+			const val = v as AttributeValue
+			const bound = attrBound.get(key)
+
 			if (bound !== undefined) {
-				this.attr[key] = bound;
+				this.attr[key] = bound
 			} else {
-				this.attr[key] = val;
-				instance.SetAttribute(key, val);
+				this.attr[key] = val
+
+				instance.SetAttribute(key, val)
 			}
-			const connection = instance.GetAttributeChangedSignal(key).Connect(() => {
-				this.handleOnChange(key, instance.GetAttribute(key));
-			});
-			this.connections.push(connection);
+
+			const connection = instance.GetAttributeChangedSignal(key).Connect(() => this.handleOnChange(key, instance.GetAttribute(key)))
+
+			this.connections.push(connection)
 		}
-		this.attributes = this.attr as T;
+
+		this.attributes = this.attr as T
 	}
 
 	private handleOnChange(key: string, newValue: AttributeValue | undefined): boolean {
-		const oldValue = this.attr[key];
-		if (newValue === oldValue) return false;
-		this.attr[key] = newValue;
-		const callbacks = this.onChangedCallbacks.get(key);
+		const oldValue = this.attr[key]
+
+		if (newValue === oldValue) return false
+
+		this.attr[key] = newValue
+
+		const callbacks = this.onChangedCallbacks.get(key)
+
 		if (callbacks) {
-			for (const callback of callbacks as ((
-				newVal: AttributeValue | undefined,
-				oldVal: AttributeValue | undefined,
-			) => void)[]) {
-				task.spawn(callback, newValue, oldValue);
-			}
+			for (const callback of callbacks as ((newVal: AttributeValue | undefined, oldVal: AttributeValue | undefined) => void)[])
+				task.spawn(callback, newValue, oldValue)
 		}
-		return true;
+
+		return true
 	}
 
 	/**
@@ -75,10 +80,12 @@ export class Attributes<T extends AttributeRecord<string, AttributeValue>, I ext
 	 * @param key Attribute name
 	 * @param value Attribute value
 	 */
-	public set<K extends keyof T>(key: K, value: T[K]): void {
-		const changed = this.handleOnChange(key as string, value);
-		if (!changed) return;
-		this.instance.SetAttribute(key as string, value);
+	public set<K extends keyof T>(key: K, value: T[K]) {
+		const changed = this.handleOnChange(key as string, value)
+
+		if (!changed) return
+
+		this.instance.SetAttribute(key as string, value)
 	}
 
 	/**
@@ -94,20 +101,23 @@ export class Attributes<T extends AttributeRecord<string, AttributeValue>, I ext
 	 * @param handler Callback
 	 * @returns Cleanup function
 	 */
-	public onChanged<K extends keyof T>(
-		key: K,
-		handler: (newValue: T[K] | undefined, oldValue: T[K] | undefined) => void,
-	) {
-		let callbacks = this.onChangedCallbacks.get(key);
+	public onChanged<K extends keyof T>(key: K, handler: (newValue: T[K] | undefined, oldValue: T[K] | undefined) => void): () => void {
+		let callbacks = this.onChangedCallbacks.get(key)
+
 		if (callbacks === undefined) {
-			callbacks = [];
-			this.onChangedCallbacks.set(key, callbacks);
+			callbacks = []
+
+			this.onChangedCallbacks.set(key, callbacks)
 		}
-		callbacks.push(handler);
+
+		callbacks.push(handler)
+
 		return () => {
-			const index = callbacks!.indexOf(handler);
-			if (index === -1) return;
-			callbacks?.unorderedRemove(index);
+			const index = callbacks!.indexOf(handler)
+
+			if (index === -1) return
+
+			callbacks?.unorderedRemove(index)
 		};
 	}
 
@@ -124,8 +134,9 @@ export class Attributes<T extends AttributeRecord<string, AttributeValue>, I ext
 	 * @returns Cleanup function
 	 */
 	public observe<K extends keyof T>(key: K, observer: (value: T[K] | undefined) => void) {
-		task.spawn(observer, this.attributes[key]);
-		return this.onChanged(key, (newValue) => observer(newValue));
+		task.spawn(observer, this.attributes[key])
+
+		return this.onChanged(key, (newValue) => observer(newValue))
 	}
 
 	/**
@@ -138,10 +149,9 @@ export class Attributes<T extends AttributeRecord<string, AttributeValue>, I ext
 	 * This does _not_ clear the attributes on the given instance.
 	 */
 	public destroy(): void {
-		for (const connection of this.connections) {
-			connection.Disconnect();
-		}
-		this.connections.clear();
-		this.onChangedCallbacks.clear();
+		this.connections.forEach((connection) => connection.Disconnect())
+
+		this.connections.clear()
+		this.onChangedCallbacks.clear()
 	}
 }

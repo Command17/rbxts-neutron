@@ -1,18 +1,18 @@
-const PROVIDER_KEY = "__proton_provider__";
+const PROVIDER_KEY = "__proton_provider__"
 
-let started = false;
-const awaitStartThreads: thread[] = [];
-const awaitCallbacks: (() => void)[] = [];
+let started = false
+
+const awaitStartThreads: thread[] = []
+const awaitCallbacks: (() => void)[] = []
 
 /**
  * Provider decorator.
  */
 export function Provider() {
 	return <T extends new () => InstanceType<T>>(providerClass: T) => {
-		if (started) {
-			error("[Neutron]: Cannot create provider after Proton has started", 2);
-		}
-		(providerClass as Record<string, unknown>)[PROVIDER_KEY] = new providerClass();
+		if (started) error("[Neutron]: Cannot create provider after Proton has started", 2);
+
+		(providerClass as Record<string, unknown>)[PROVIDER_KEY] = new providerClass()
 	};
 }
 
@@ -39,16 +39,15 @@ export namespace Neutron {
 	 * ```
 	 */
 	export function start() {
-		if (started) return;
-		started = true;
-		for (const callback of awaitCallbacks) {
-			task.spawn(callback);
-		}
-		for (const awaitThread of awaitStartThreads) {
-			task.spawn(awaitThread);
-		}
-		awaitCallbacks.clear();
-		awaitStartThreads.clear();
+		if (started) return
+
+		started = true
+
+		awaitCallbacks.forEach((callback) => task.spawn(callback))
+		awaitStartThreads.forEach((awaitThread) => task.spawn(awaitThread))
+
+		awaitCallbacks.clear()
+		awaitStartThreads.clear()
 	}
 
 	/**
@@ -61,12 +60,13 @@ export namespace Neutron {
 	 * ```
 	 */
 	export function awaitStart() {
-		if (started) {
-			return;
-		}
-		const thread = coroutine.running();
-		awaitStartThreads.push(thread);
-		coroutine.yield();
+		if (started) return
+
+		const thread = coroutine.running()
+
+		awaitStartThreads.push(thread)
+
+		coroutine.yield()
 	}
 
 	/**
@@ -77,10 +77,12 @@ export namespace Neutron {
 	 */
 	export function onStart(callback: () => void) {
 		if (started) {
-			task.spawn(callback);
-			return;
+			task.spawn(callback)
+
+			return
 		}
-		awaitCallbacks.push(callback);
+
+		awaitCallbacks.push(callback)
 	}
 
 	/**
@@ -103,10 +105,10 @@ export namespace Neutron {
 	 * @returns The provider singleton object
 	 */
 	export function get<T extends new () => InstanceType<T>>(providerClass: T): InstanceType<T> {
-		const provider = (providerClass as Record<string, unknown>)[PROVIDER_KEY] as InstanceType<T> | undefined;
-		if (provider === undefined) {
-			error(`[Neutron]: Failed to find provider "${tostring(providerClass)}"`, 2);
-		}
+		const provider = (providerClass as Record<string, unknown>)[PROVIDER_KEY] as InstanceType<T> | undefined
+
+		if (provider === undefined) error(`[Neutron]: Failed to find provider "${tostring(providerClass)}"`, 2)
+
 		return provider;
 	}
 }
