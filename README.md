@@ -3,11 +3,48 @@
 [![Lint](https://github.com/Command17/rbxts-proton/actions/workflows/lint.yaml/badge.svg)](https://github.com/Command17/rbxts-proton/actions/workflows/lint.yaml)
 [![Release](https://github.com/Command17/rbxts-proton/actions/workflows/release.yaml/badge.svg)](https://github.com/Command17/rbxts-proton/actions/workflows/release.yaml)
 
-Neutron is a fork from proton that adds some usefull stuff.
+Neutron is a fork from [Proton](https://github.com/Sleitnick/rbxts-proton) that adds some usefull stuff.
+
+Neutron is an easy-to-use framework for Roblox game development.
+
+Like the neutron of an atom, Neutron aims at adding stability to your game development, all while only remaining a portion of the whole. Use Neutron to structure and connect the top-level design of your game.
 
 ## Class Components
 
+A `ClassComponent` is just like a `Component` except it has no `onStart` or `onStop` method.
+
+```ts
+import { BaseClassComponent, ClassComponent } from "@rbxts/neutron";
+
+@ClassComponent({ tag: "MyClassComponent" })
+class MyClassComponent extends BaseClassComponent<BasePart> {
+	constructor() {
+		// Start code
+	}
+
+	public destroy() {
+		// clean up code
+	}
+}
+```
+
 ## Dangerous Net Function
+
+`DangerousNetFunction` allows the server to ask the client for stuff unlike `NetFunctions`
+
+> **Warning**
+>
+> There is no timeout for this, that means if the client yields, the server will also yield.
+
+```ts
+// shared/network.ts
+import { UnreliableNetEvent } from "@rbxts/neutron";
+
+export namespace Network {
+	// Send the mouse pos to the server
+	export const updateMousePos = new UnreliableNetEvent<[pos: Vector3], NetEventType.ClientToServer>
+}
+```
 
 ## Unreliable Net Event
 
@@ -26,15 +63,6 @@ export namespace Network {
 ```
 
 ---
-
-# Proton
-
-Proton is an easy-to-use framework for Roblox game development.
-
-Like the proton of an atom, Proton aims at adding stability to your game development, all while only remaining a portion of the whole. Use Proton to structure and connect the top-level design of your game.
-
-> **Warning**
-> Proton is early in development. Due to currently limitations with roblox-ts, Proton does not yet support dependency injection, which is a necessary feature to make Proton production-ready. Other portions of Proton may also change, as the overall API is not solidified.
 
 ## Providers
 
@@ -284,7 +312,7 @@ export class MyProvider {
 Bind components to Roblox instances using the Component class and CollectionService tags.
 
 ```ts
-import { BaseComponent, Component } from "@rbxts/proton";
+import { BaseComponent, Component } from "@rbxts/neutron";
 
 @Component({ tag: "MyComponent" })
 class MyComponent extends BaseComponent<BasePart> {
@@ -296,7 +324,7 @@ class MyComponent extends BaseComponent<BasePart> {
 In initialization file:
 
 ```ts
-import { Proton } from "@rbxts/proton";
+import { Proton } from "@rbxts/neutron";
 
 import "./wherever/my-component";
 
