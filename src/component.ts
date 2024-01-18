@@ -86,7 +86,7 @@ export abstract class BaseComponent<I extends Instance = Instance> {
  * @param classComponent The component class to wrap to a BaseComponent
  * @returns WrappedComponent
  */
-export function wrapBaseClassComponent<T extends Instance = Instance>(classComponent: new () => BaseClassComponent<T>): new () => BaseComponent<T> {
+export function wrapBaseClassComponent<T extends Instance = Instance>(classComponent: new (instance: Instance, tag: string) => BaseClassComponent<T>): new () => BaseComponent<T> {
 	return class WrappedComponent<T extends Instance = Instance> extends BaseComponent<T> {
 		private classComponent?: BaseClassComponent
 
@@ -97,7 +97,7 @@ export function wrapBaseClassComponent<T extends Instance = Instance>(classCompo
 		public onStart() {
 			this.classComponent?.destroy()
 
-			this.classComponent = new classComponent()
+			this.classComponent = new classComponent(this.instance, this.tag)
 		}
 	
 		public onStop() {
@@ -108,16 +108,21 @@ export function wrapBaseClassComponent<T extends Instance = Instance>(classCompo
 	}
 }
 
-export abstract class BaseClassComponent<I extends Instance = Instance> {
+export abstract class BaseClassComponent<T extends Instance = Instance> {
 	/**
 	 * Attached instance.
 	 */
-	public instance!: I
+	public instance!: T
 
 	/**
 	 * CollectionService tag.
 	 */
 	public tag!: string
+
+	constructor(instance: T, tag: string) {
+		this.instance = instance
+		this.tag = tag
+	}
 
 	public abstract destroy(): void
 }

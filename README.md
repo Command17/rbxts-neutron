@@ -5,10 +5,6 @@
 
 Neutron is a fork from [Proton](https://github.com/Sleitnick/rbxts-proton) that adds some usefull stuff.
 
-Neutron is an easy-to-use framework for Roblox game development.
-
-Like the neutron of an atom, Neutron aims at adding stability to your game development, all while only remaining a portion of the whole. Use Neutron to structure and connect the top-level design of your game.
-
 ## Class Components
 
 A `ClassComponent` is just like a `Component` except it has no `onStart` or `onStop` method.
