@@ -2,6 +2,10 @@
 
 Neutron is a fork from [Proton](https://github.com/Sleitnick/rbxts-proton) that adds some usefull stuff.
 
+> **Warning**
+>
+> Neutron is still in its early stages! Bugs may exist.
+
 ## Class Components
 
 A `ClassComponent` is just like a `Component` except it has no `onStart` or `onStop` method.
