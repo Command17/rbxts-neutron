@@ -4,8 +4,8 @@
   "description": "A framework for roblox-ts",
   "main": "out/init.lua",
   "scripts": {
-    "build": "npx rbxtsc --verbose",
-    "watch": "npx rbxtsc -w --verbose",
+    "build": "rbxtsc",
+    "watch": "rbxtsc -w",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -14,7 +14,10 @@
     "roblox"
   ],
   "author": "Command17",
-  "repository": "github:Command17/rbxts-neutron",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Command17/rbxts-neutron"
+  },
   "license": "MIT",
   "types": "out/index.d.ts",
   "files": [
