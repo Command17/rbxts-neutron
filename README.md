@@ -1,8 +1,5 @@
 # Neutron
 
-[![Lint](https://github.com/Command17/rbxts-proton/actions/workflows/lint.yaml/badge.svg)](https://github.com/Command17/rbxts-proton/actions/workflows/lint.yaml)
-[![Release](https://github.com/Command17/rbxts-proton/actions/workflows/release.yaml/badge.svg)](https://github.com/Command17/rbxts-proton/actions/workflows/release.yaml)
-
 Neutron is a fork from [Proton](https://github.com/Sleitnick/rbxts-proton) that adds some usefull stuff.
 
 ## Class Components
@@ -12,7 +9,7 @@ A `ClassComponent` is just like a `Component` except it has no `onStart` or `onS
 ```ts
 import { BaseClassComponent, ClassComponent } from "@rbxts/neutron";
 
-@ClassComponent({ tag: "MyClassComponent" })
+@ClassComponent<BasePart>({ tag: "MyClassComponent" })
 class MyClassComponent extends BaseClassComponent<BasePart> {
 	constructor(instance: BasePart, tag: string) {
 		super(instance, tag)

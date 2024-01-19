@@ -86,11 +86,11 @@ export abstract class BaseComponent<I extends Instance = Instance> {
  * @param classComponent The component class to wrap to a BaseComponent
  * @returns WrappedComponent
  */
-export function wrapBaseClassComponent<T extends Instance = Instance>(classComponent: new (instance: Instance, tag: string) => BaseClassComponent<T>): new () => BaseComponent<T> {
-	return class WrappedComponent<T extends Instance = Instance> extends BaseComponent<T> {
-		private classComponent?: BaseClassComponent
+export function wrapBaseClassComponent<T extends Instance>(classComponent: new (instance: T, tag: string) => BaseClassComponent<T>): new () => BaseComponent<T> {
+	return class WrappedComponent extends BaseComponent<T> {
+		private classComponent?: BaseClassComponent<T>
 
-		public getClassComponent(): BaseClassComponent | undefined {
+		public getClassComponent(): BaseClassComponent<T> | undefined {
 			return this.classComponent
 		}
 	
@@ -108,16 +108,16 @@ export function wrapBaseClassComponent<T extends Instance = Instance>(classCompo
 	}
 }
 
-export abstract class BaseClassComponent<T extends Instance = Instance> {
+export abstract class BaseClassComponent<T extends Instance> {
 	/**
 	 * Attached instance.
 	 */
-	public instance!: T
+	public instance: T
 
 	/**
 	 * CollectionService tag.
 	 */
-	public tag!: string
+	public tag: string
 
 	constructor(instance: T, tag: string) {
 		this.instance = instance
@@ -131,8 +131,8 @@ export abstract class BaseClassComponent<T extends Instance = Instance> {
  * ClassComponent decorator.
  * @param config Component configuration
  */
-export function ClassComponent(config: ComponentConfig) {
-	return <B extends new () => BaseClassComponent>(componentClass: B) => {
+export function ClassComponent<T extends Instance>(config: ComponentConfig) {
+	return <B extends new (instance: T, tag: string) => BaseClassComponent<T>>(componentClass: B) => {
 		if (config.tag !== undefined && usedTags.has(config.tag)) error(`[Neutron]: Cannot have more than one class component with the same tag (tag: "${config.tag}")`, 2)
 
 		const wrappedComponentClass = wrapBaseClassComponent(componentClass)

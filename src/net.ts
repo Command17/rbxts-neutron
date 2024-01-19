@@ -317,7 +317,7 @@ class DangerousNetFunctionClient<TX extends unknown[] | unknown, RX extends unkn
 	 * @param handler Handler
 	 */
 	public handle(handler: (...args: NetworkParams<TX>) => NetworkReturn<RX>) {
-		this.remoteFunction.OnClientInvoke = handler as (player: Player, ...args: unknown[]) => NetworkReturn<RX>
+		this.remoteFunction.OnClientInvoke = handler as (...args: unknown[]) => NetworkReturn<RX>
 	}
 
 	/**
@@ -408,18 +408,18 @@ export class DangerousNetFunction<TX extends unknown[] | unknown, RX extends unk
 	/**
 	 * Server API for the function. Should only be used from the server.
 	 */
-	public readonly server: DangerousNetFunctionClient<TX, RX>
+	public readonly server: DangerousNetFunctionServer<TX, RX>
 
 	/**
 	 * Client API for the function. Should only be used from the client.
 	 */
-	public readonly client: DangerousNetFunctionServer<TX, RX>
+	public readonly client: DangerousNetFunctionClient<TX, RX>
 
 	constructor(name?: string) {
 		this.remoteFunction = setupRemoteObject("RemoteFunction", name)
 
-		this.server = new DangerousNetFunctionClient(this.remoteFunction)
-		this.client = new DangerousNetFunctionServer(this.remoteFunction)
+		this.server = new DangerousNetFunctionServer(this.remoteFunction)
+		this.client = new DangerousNetFunctionClient(this.remoteFunction)
 	}
 }
 
