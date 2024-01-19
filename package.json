@@ -1,6 +1,6 @@
 {
   "name": "@rbxts/neutron",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A framework for roblox-ts",
   "main": "out/init.lua",
   "scripts": {
