@@ -100,10 +100,10 @@ export class MyProvider {
 ```
 
 ### Built-in Start Lifecycle
-Proton includes an optional built-in lifecycle method `ProtonStart`, which is fired when Proton is started. All `ProtonStart` lifecycle methods are called at the same time using `task.spawn`, which means that these methods can yield without blocking other providers from starting. It is common practice to use `ProtonStart` as a place to have long-running loops (e.g. a system that drives map loading and rotation every round).
+Neutron includes an optional built-in lifecycle method `NeutronStart`, which is fired when Neutron is started. All `NeutronStart` lifecycle methods are called at the same time using `task.spawn`, which means that these methods can yield without blocking other providers from starting. It is common practice to use `NeutronStart` as a place to have long-running loops (e.g. a system that drives map loading and rotation every round).
 
 ```ts
-import { Lifecycle, ProtonStart, Provider } from "@rbxts/neutron";
+import { Lifecycle, NeutronStart, Provider } from "@rbxts/neutron";
 
 @Provider()
 export class MyProvider {
@@ -111,7 +111,7 @@ export class MyProvider {
 		print("MyProvider initialized");
 	}
 
-	@Lifecycle(ProtonStart)
+	@Lifecycle(NeutronStart)
 	public onStart() {
 		print("MyProvider started");
 	}
