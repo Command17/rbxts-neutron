@@ -118,42 +118,42 @@ export class MyProvider {
 }
 ```
 
-## Starting Proton
+## Starting Neutron
 
 From both a server and client script, call the `Proton.start()` method.
 
 ```ts
-import { Proton } from "@rbxts/proton";
+import { Neutron } from "@rbxts/proton";
 
-Proton.start();
+Neutron.start();
 ```
 
 If another script requires Proton to be started, `Proton.awaitStart()` can be used, which will yield until Proton is fully started.
 
 ```ts
-import { Proton } from "@rbxts/neutron";
+import { Neutron } from "@rbxts/neutron";
 
-Proton.awaitStart();
+Neutron.awaitStart();
 ```
 
 ### Loading Providers
 Modules are not magically loaded. Thus, if your providers exist in their own modules but are never imported by any running code, then Proton will never see them and they will not start. This is common for top-level providers that no other code relies on. In such cases, they must be explicitly imported:
 
 ```ts
-import { Proton } from "@rbxts/neutron";
+import { Neutron } from "@rbxts/neutron";
 
 // e.g.
 import "./providers/my-provider.ts"
 
-Proton.start();
+Neutron.start();
 ```
 
 ## Getting a Provider
 
-Once Proton is started, use `Proton.get()` to get a provider:
+Once Neutron is started, use `Neutron.get()` to get a provider:
 
 ```ts
-const myProvider = Proton.get(MyProvider);
+const myProvider = Neutron.get(MyProvider);
 myProvider.helloWorld();
 ```
 
@@ -162,7 +162,7 @@ Providers can also access other providers:
 ```ts
 @Provider()
 export class AnotherProvider {
-	private readonly myProvider = Proton.get(MyProvider);
+	private readonly myProvider = Neutron.get(MyProvider);
 
 	constructor() {
 		myProvider.helloWorld();
